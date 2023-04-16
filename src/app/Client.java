@@ -65,7 +65,6 @@ public class Client extends JFrame {
 
 	private Thread thread;
 	private Socket socket;
-	private int id;
 	private List<String> onlineList;
 	private JButton btnSend;
 	private JComboBox<String> comboBox;
@@ -109,34 +108,46 @@ public class Client extends JFrame {
 	}
 
 	private void writeString(String message) {
-		writer.println(message + "\n");
+		System.out.println("Client send to server: " + message);
+		writer.println(message);
+		writer.flush();
 	}
 
 	private void writeImage() throws IOException {
-		byte[] imageBytes = appModel.getImagebytes();
-		dos.writeInt(imageBytes.length);
-		dos.write(imageBytes);
+		byte[] imageClientBytes = appModel.getImagebytes();
+		dos.write(imageClientBytes,0, appModel.getLength());
 		dos.flush();
+		System.out.println("Đã gửi ảnh cho server");
 	}
-
+	
 	private void receiveMessageFromServer() {
 		try {
-			String message;
 			while (true) {
-				message = reader.readLine();
-				System.out.println(message);
-				if (message == null) {
-					break;
-				}
-				String[] messageSplit = message.split("\\|");
-				if (messageSplit[0].equals("get-id")) {
-					setID(Integer.parseInt(messageSplit[1]));
+				System.out.println(appModel.getId()+" Dang doi o readLien");
+				String message = reader.readLine();
+				 if (message == null) {
+                     break;
+                 }
+				System.out.println("Message from server: " + message);
+
+				String[] rp = message.split("\\-\\-");
+				String[] messageSplit = rp[0].split("\\|");
+				String stateMessage = messageSplit[0];
+				String stateImage = rp[1];
+				int lengthFromServer = Integer.parseInt(stateImage);
+				String messageContent = messageSplit[2];
+				String name = messageSplit[1];
+				String time = messageSplit[3];
+
+				if (stateMessage.equals("get-id")) {
+					setID(Integer.parseInt(name));
 					setIDTitle();
+					continue;
 				}
-				if (messageSplit[0].equals("update-online-list")) {
+				if (stateMessage.equals("update-online-list")) {
 					onlineList = new ArrayList<>();
 					String online = "";
-					String[] onlineSplit = messageSplit[1].split("-");
+					String[] onlineSplit = name.split("\\+");
 					for (int i = 0; i < onlineSplit.length; i++) {
 						onlineList.add(onlineSplit[i]);
 						online += "Client " + onlineSplit[i] + " đang online \n";
@@ -144,41 +155,33 @@ public class Client extends JFrame {
 					System.out.println(online);
 					onlineListArea.setText(online);
 					updateCombobox();
+					continue;
 				}
-				if (messageSplit[0].equals("global-message")) {
+				if (stateMessage.equals("entered")) {
+					updateUImessage(name + time, "", "");
+					continue;
+				}
+				if (stateMessage.equals("global-message")) {
+					if (!stateImage.equals("0")) {
+						System.out.println(appModel.getId() + " Dang doi o readFully");
 
+						System.out.println(lengthFromServer);
+						byte[] imageBytes = new byte[lengthFromServer];
+						dis.readFully(imageBytes);
+						ImageIcon newIcon = appModel.getImageIcon(imageBytes);
+						updateUImessage(name, messageContent, newIcon, time);
+					}
+					if (stateImage.equals("0")) {
+						updateUImessage(name, messageContent, time);
+					}
+					continue;
 				}
+				System.out.println("cái lozz gì thế: "+message);
+				System.out.println("cái lozz gì thế: "+message);
+				
 			}
 		} catch (Exception e) {
 
-		}
-
-	}
-
-	private void updateChangeFile(String path, String name) {
-		if(path!="") {
-			appModel.setImageName(name);
-			appModel.checkFileJPG();
-			System.out.println(path);
-			appModel.setImagePath(path);
-			imageSendLabel.setIcon(new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(imageSendLabel.getWidth(),
-					imageSendLabel.getHeight(), Image.SCALE_SMOOTH)));
-			try {
-				BufferedImage image;
-				image = ImageIO.read(new File(path));
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-				if (appModel.isFileJPG()) {
-					ImageIO.write(image, "jpg", byteArrayOutputStream);
-				} else {
-					ImageIO.write(image, "png", byteArrayOutputStream);
-				}
-				byte[] imageBytes = byteArrayOutputStream.toByteArray();
-				appModel.setImagebytes(imageBytes);
-			} catch (IOException e) {
-			}
-			
-		} else {
-			appModel = new AppModel();
 		}
 	}
 
@@ -201,36 +204,41 @@ public class Client extends JFrame {
 		String time = appModel.getTime();
 		System.out.println("đã nhấn nut send");
 		if (comboBox.getSelectedIndex() == 0) {
-			try {
-				if (appModel.getImagePath() != "") {
-					writeString("send-to-global" + "|" + str + "|" + this.id + "|" + time + "--" + "have image");
+			int lent = appModel.getLength();
+			if (lent !=0) {
+				writeString("send-to-global" + "|" + str + "|" + appModel.getId() + "|" + time + "--" + appModel.getLength());
+				updateUImessage("You: ", str, appModel.getIcon(), time);
+				try {
 					writeImage();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				writeString("send-to-global" + "|" + str + "|" + this.id + "|" + time + "--" + "no image");
+			} else {
+				writeString("send-to-global" + "|" + str + "|" + appModel.getId() + "|" + time + "--" + appModel.getLength());
 				updateUImessage("You: ", str, time);
-			} catch (IOException ex) {
-				JOptionPane.showMessageDialog(rootPane, "Có lỗi xảy ra");
-			}
-		} else {
-			try {
-				String[] parner = ((String) comboBox.getSelectedItem()).split(" ");
-				if (appModel.getImagePath() != "") {
-					writeString("send-to-person" + "|" + str + "|" + this.id + "|" + parner[1] + "|"
-							+ appModel.getTime() + "--" + "have image");
-					writeImage();
-				}
-				writeString("send-to-person" + "|" + str + "|" + this.id + "|" + parner[1] + "|" + appModel.getTime()
-						+ "--" + "no image");
-				updateUImessage("You send to " + parner[1], str, time);
-			} catch (IOException ex) {
-				JOptionPane.showMessageDialog(rootPane, "Có lỗi xảy ra");
 			}
 		}
-		// reset
-		appModel = new AppModel();
-		textFieldInput.setText("");
-		imageSendLabel.setIcon(null);
-		btnCloseImage.setVisible(false);
+//		else {
+//			try {
+//				String[] parner = ((String) comboBox.getSelectedItem()).split(" ");
+//				if (appModel.getImagePath() != "") {
+//					writeString("send-to-person" + "|" + str + "|" + this.id + "|" + parner[1] + "|"
+//							+ appModel.getTime() + "--" + appModel.getLength());
+//					writeImage();
+//				} else {
+//					writeString("send-to-person" + "|" + str + "|" + this.id + "|" + parner[1] + "|"
+//							+ appModel.getTime() + "--" + appModel.getLength());
+//				}
+//				updateUImessage("You send to " + parner[1], str, time);
+//			} catch (IOException ex) {
+//				JOptionPane.showMessageDialog(rootPane, "Có lỗi xảy ra");
+//			}
+//		}
+//		 reset
+//		appModel = new AppModel();
+//		textFieldInput.setText("");
+//		imageSendLabel.setIcon(null);
+//		btnCloseImage.setVisible(false);
 	}
 
 	public void btnCloseImageEvent() {
@@ -238,16 +246,48 @@ public class Client extends JFrame {
 		btnChooseImage.setVisible(false);
 	}
 
+	private void updateChangeFile(String path, String name) {
+		if (path != "") {
+			appModel.setImageName(name);
+			appModel.setImagePath(path);
+			appModel.checkFileJPG();
+			System.out.println(path);
+			imageSendLabel.setIcon(new ImageIcon(new ImageIcon(path).getImage()
+					.getScaledInstance(imageSendLabel.getWidth(), imageSendLabel.getHeight(), Image.SCALE_SMOOTH)));
+			try {
+				BufferedImage image = ImageIO.read(new File(path));
+				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+				if (appModel.isFileJPG()) {
+					ImageIO.write(image, "jpg", byteArrayOutputStream);
+				} else {
+					ImageIO.write(image, "png", byteArrayOutputStream);
+				}
+				byte[] imageBytes = byteArrayOutputStream.toByteArray();
+				appModel.setImagebytes(imageBytes);
+				appModel.setLength(imageBytes.length);
+				appModel.setIcon(appModel.getImageIcon(imageBytes));
+			} catch (IOException e) {
+			}
+
+		} else {
+			appModel = new AppModel();
+		}
+	}
+
+	private void updateUImessage(String name, String messageConten, ImageIcon icon, String time) {
+		TimeImagePanel newPanel = new TimeImagePanel(name, messageConten, icon, time);
+		model.addElement(newPanel);
+	}
+
 	private void updateUImessage(String name, String messageConten, String time) {
-		ImageIcon newIcon = appModel.getImageIcon(appModel.getImagebytes());
-		TimeImagePanel newPanel = new TimeImagePanel(name, messageConten, newIcon, time);
+		TimeImagePanel newPanel = new TimeImagePanel(name, messageConten, null, time);
 		model.addElement(newPanel);
 	}
 
 	private void updateCombobox() {
 		comboBox.removeAllItems();
 		comboBox.addItem("Send to everyone");
-		String idString = "" + this.id;
+		String idString = "" + appModel.getId();
 		for (String e : onlineList) {
 			if (!e.equals(idString)) {
 				comboBox.addItem("Client " + e);
@@ -256,11 +296,11 @@ public class Client extends JFrame {
 	}
 
 	private void setIDTitle() {
-		this.setTitle("Client " + this.id);
+		this.setTitle("Client " + appModel.getId());
 	}
 
 	private void setID(int id) {
-		this.id = id;
+		appModel.setId(id);
 	}
 
 	public Client() {

@@ -13,17 +13,29 @@ public class AppModel {
 	private String messageContent;
 	private byte[] imagebytes;
 	private boolean isFileJPG;
+	private ImageIcon icon;
+	private int length;
 	
 
 	public AppModel() {
+		this.setId(0);
+		this.icon= null;
 		this.imagePath = "";
 		this.setImagebytes(null);
 		this.time = "";
 		this.messageContent = "";
 		this.isFileJPG = true;
+		this.setLength(0);
 	}
 	
 	//
+	public ImageIcon getIcon() {
+		return icon;
+	}
+	
+	public void setIcon(ImageIcon icon) {
+		this.icon = icon;
+	}
 	
 	public String getImagePath() {
 		return imagePath;
@@ -61,6 +73,9 @@ public class AppModel {
 		if (filename.endsWith(".png")) {
 			setFileJPG(false);
 		}
+		if (filename.endsWith(".jpg")) {
+			setFileJPG(true);
+		}
 	}
 	
 	public void updateTimeNow() {
@@ -80,11 +95,9 @@ public class AppModel {
 
 	public byte[] getImagebytes() {
 		return imagebytes;
-		
 	}
 	public void setImagebytes(byte[] imagebytes) {
 		this.imagebytes = imagebytes;
-		
 	}
 	
 	public ImageIcon getImageIcon(byte[] imageBytes) {
@@ -95,5 +108,13 @@ public class AppModel {
 			return null;
 		}
 		return icon;
+	}
+
+	public int getLength() {
+		return length;
+	}
+
+	public void setLength(int length) {
+		this.length = length;
 	}
 }

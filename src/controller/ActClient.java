@@ -29,7 +29,6 @@ public class ActClient implements ActionListener {
 		}
 		Object pathBtn = e.getSource();
 		if(pathBtn == this.viewClient.btnCloseImage) {
-			System.out.println("da nhan nut");
 			this.viewClient.btnCloseImageEvent();
 		}
 	}
