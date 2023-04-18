@@ -13,7 +13,6 @@ public class ServerThread implements Runnable {
 	private DataOutputStream dos;
 	private boolean isClosed;
 	private boolean isLoggedIn;
-	
 
 	public ServerThread(Socket socket, String clientNumber) {
 		this.socket = socket;
@@ -40,7 +39,7 @@ public class ServerThread implements Runnable {
 	@Override
 	public void run() {
 		try {
-			
+
 			while (!isClosed) {
 				handleClientRequest();
 			}
@@ -49,7 +48,7 @@ public class ServerThread implements Runnable {
 			socket.close();
 		} catch (IOException e) {
 			isClosed = true;
-			if(isLoggedIn) {
+			if (isLoggedIn) {
 				Server.sharedResource.removeServerThread(this);
 				System.out.println(this.clientNumber + " đã thoát");
 				Server.sharedResource.mutilCastSend("login notice|>Client " + clientNumber + ": exited the room");
@@ -67,41 +66,57 @@ public class ServerThread implements Runnable {
 		System.out.println(request);
 
 		String[] rqSplit = request.split("\\|>");
-		if(isLoggedIn ==false && rqSplit[0].equals("login request")) {
-			String[] rqLogin =rqSplit[1].split("\\-");
+		// Xu ly dang ky
+		if(rqSplit[0].equals("sign up request")) {
+			String[] rqSignup= rqSplit[1].split("\\-");
+			String username = rqSignup[0].trim();
+			String password = rqSignup[1].trim();
+			String nickname = rqSignup[2].trim();
+			
+			String response = addData(username, password, nickname);
+			sendString(response);
+			return;
+		}
+		if (isLoggedIn == false && rqSplit[0].equals("login request")) {
+			int i = 0;
+			String[] rqLogin = rqSplit[1].split("\\-");
 			String username = rqLogin[0].trim();
 			String password = rqLogin[1].trim();
-			
+
 			// xu ly dang nhap
 			String response = getData(username, password);
 			System.out.println(response);
-			sendString(response);
-			if(response.equals("success")) {
-				isLoggedIn = true;
-				this.clientNumber = username;
-				Server.sharedResource.addServerThread(this);
-				// Receive message from client
-				System.out.println("new thread start up successfully, ID: " + clientNumber);
+			if (Server.sharedResource.checkOnline(response)) {
+				sendString("online");
+			} else {
+				sendString(response);
+				if (!response.equals("fail")) {
+					isLoggedIn = true;
+					this.clientNumber = response;
+					Server.sharedResource.addServerThread(this);
+					// Receive message from client
+					System.out.println("new thread start up successfully, ID: " + clientNumber);
 //				sendString("get-id|>" + clientNumber);
-				Server.sharedResource.sendOnlineList();
-				Server.sharedResource.mutilCastSend("login notice|>Client " + clientNumber + ": entered the room");
+					Server.sharedResource.sendOnlineList();
+					Server.sharedResource.mutilCastSend("login notice|>" + clientNumber + ": entered the room");
+				}
 			}
+
 		} else {
 			String receiver = rqSplit[0];
-			
+
 			byte[] imageData = readImage(dis);
 			System.out.println("da qua duoc readIamge");
 			// Đóng gói dữ liệu tin nhắn và ảnh vào DataPackage
 			DataPackage data = new DataPackage("message|>" + request, imageData);
-			
+
 			// Lưu DataPackage vào SharedResource
 			Server.sharedResource.addData(data);
 			System.out.println("da qua duoc luu data");
 			if (receiver.equals("Send to all")) {
 				Server.sharedResource.broadcast(this.clientNumber);
 				System.out.println("hoanf thanh boradcast");
-			}
-			else {
+			} else {
 				System.out.println("Vao send to ono");
 				Server.sharedResource.sendToOnePerson(receiver);
 			}
@@ -154,23 +169,21 @@ public class ServerThread implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
-	public static String addData(String username, String password) {
-		String receivePass = DAO.getData(username);
-		if(receivePass!="") {
+
+	public static String addData(String username, String password, String nickname) {
+		if(DAO.isDuplicateValue(username, nickname)) {
 			return "fail";
 		}
-		DAO.addData(username,password);
+		DAO.addData(username, password, nickname);
 		return "success";
 	}
 
 	public static String getData(String username, String password) {
-		String receivePass = DAO.getData(username);
-		if(password.equals(receivePass)) {
-			return "success";
+		String receivePass = DAO.getData(username, password);
+		if (receivePass.equals("")) {
+			return "fail";
 		}
-		return "fail";
+		return receivePass;
 	}
-
 
 }

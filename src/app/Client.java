@@ -117,12 +117,6 @@ public class Client extends JFrame {
 				String[] rp = message.split("\\|>");
 				String condition = rp[0];
 
-//				if (condition.equals("get-id")) {
-//					setID(Integer.parseInt(rp[1]));
-//					setIDTitle();
-//					continue;
-//				}
-
 				if (condition.equals("login notice")) {
 					updateUImessage(rp[1], "", getTimeNow());
 					continue;
@@ -167,6 +161,9 @@ public class Client extends JFrame {
 	public void btnSendEvent() {
 		String messageContent = textFieldInput.getText();
 		System.out.println("vi tri: " + comboBox.getSelectedIndex());
+		if(messageContent.equals("") && pathImage.equals("")) {
+			return;
+		}
 		if (comboBox.getSelectedIndex() == 0) {
 			String strToSend = "Send to all" + "|>" + clientName + "-" + messageContent + "-" + getTimeNow();
 			ImageIcon imageSend = getImageIcon(byteImage);

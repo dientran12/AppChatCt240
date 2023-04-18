@@ -23,6 +23,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.awt.event.ActionEvent;
 import javax.swing.JPasswordField;
 
@@ -68,7 +69,7 @@ public class LoginView extends JFrame {
 		        System.out.println(username);
 		        System.out.println(password);
 		        if(username.isEmpty() || password.isEmpty()) {
-		        	JOptionPane.showMessageDialog(_this, "Tài khoản hoặc mật khẩu không đúng.\n Đăng ký thất bại!!!");
+		        	JOptionPane.showMessageDialog(_this, "Hãy nhập đầy đủ!!!");
 		        }else {
 //		        	Socket socket;
 		    		try {
@@ -80,15 +81,16 @@ public class LoginView extends JFrame {
 		    			
 		    			dos.writeUTF("login request|>"+username +"-"+ password);
 		    			String response = dis.readUTF();
-//		    			String rp[] =response.split("\\|");
-		    			if(response.equals("success")) {
+		    			if(response.equals("online")) {
+		    				JOptionPane.showMessageDialog(_this, "Tài khoản này đang được sử dụng!");
+		    			} else if(!response.equals("fail")) {
 		    				
 		    				Client clientView = new Client();
-		    				clientView.clientName = username;
+		    				clientView.clientName = response;
 		    				clientView.setUpSocket(socket);
 		    				dispose();
-		    			}else {
-		    				
+		    			} else {
+		    				JOptionPane.showMessageDialog(_this, "Tài khoản hoặc mật khẩu không đúng", "Sign in fail", JOptionPane.ERROR_MESSAGE);
 		    			}
 		    			System.out.println("ket thuc ket noi");
 		    		} catch (IOException ex) {
@@ -110,7 +112,6 @@ public class LoginView extends JFrame {
 		contentPane.add(lbSignIn);
 		
 		inputUsername = new JTextField();
-		inputUsername.setToolTipText("");
 		inputUsername.setBounds(120, 105, 169, 34);
 		contentPane.add(inputUsername);
 		inputUsername.setColumns(10);
@@ -123,13 +124,15 @@ public class LoginView extends JFrame {
 		lblPassword.setBounds(25, 151, 67, 34);
 		contentPane.add(lblPassword);
 		
-		JButton btnNewButton_1 = new JButton("Create an Account");
-		btnNewButton_1.addActionListener(new ActionListener() {
+		JButton btnCreate = new JButton("Create an Account");
+		btnCreate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				SignUpView signUpView = new SignUpView();
+				dispose();
 			}
 		});
-		btnNewButton_1.setBounds(25, 280, 137, 28);
-		contentPane.add(btnNewButton_1);
+		btnCreate.setBounds(25, 280, 137, 28);
+		contentPane.add(btnCreate);
 		
 		passwordField = new JPasswordField();
 		passwordField.setBounds(120, 151, 169, 34);

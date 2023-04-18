@@ -64,10 +64,11 @@ public class SharedResource {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("da den poll sendtooneperson");
+		System.out.println("da den poll sendtooneperson" + clientName);
 		DataPackage data = dataQueue.poll();
 		for (ServerThread serverThread : Server.sharedResource.getListServerThreads()) {
-			if (serverThread.getClientNumber() == clientName) {
+			System.out.println(serverThread.getClientNumber());
+			if (serverThread.getClientNumber().equals(clientName)) {
 				serverThread.sendData(data);
 				break;
 			}
@@ -82,6 +83,14 @@ public class SharedResource {
 		mutilCastSend("update-list|>" + res);
 	}
 
+	public boolean checkOnline(String response) {
+		for (ServerThread serverThread : Server.sharedResource.getListServerThreads()) {
+			if(serverThread.getClientNumber().equals(response)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 
 }

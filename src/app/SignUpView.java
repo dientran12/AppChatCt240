@@ -19,91 +19,128 @@ import javax.swing.JButton;
 import java.awt.Font;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.awt.event.ActionEvent;
 import javax.swing.JPasswordField;
 
 public class SignUpView extends JFrame {
 
 	private JPanel contentPane;
-	private JTextField inputUsername;
 	public JButton btnSubmit;
-	private JPasswordField passwordField;
-	private JTextField textField;
+	private JPasswordField comfirmInput;
+	private JTextField usernameInput;
 	private boolean isSuccess = true;
+	private JTextField nicknameInput;
+	private JPasswordField passwordInput;
 
 	/**
 	 * Launch the application.
-	 * @throws UnsupportedLookAndFeelException 
-	 * @throws IllegalAccessException 
-	 * @throws InstantiationException 
-	 * @throws ClassNotFoundException 
+	 * 
+	 * @throws UnsupportedLookAndFeelException
+	 * @throws IllegalAccessException
+	 * @throws InstantiationException
+	 * @throws ClassNotFoundException
 	 */
-	
-	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-		SignUpView frame = new SignUpView();
-	}
-	
 
 	public SignUpView() {
 		SignUpView _this = this;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 384, 406);
+		setBounds(100, 100, 383, 461);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-		
+
 		btnSubmit = new JButton("Submit");
 		btnSubmit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				 // Đăng nhập thất bại, hiển thị thông báo lỗi
-				isSuccess = !isSuccess;
-				if(isSuccess) {
-					JOptionPane.showMessageDialog(_this, "Đăng ký thành công!!!");
-				}else {
-					JOptionPane.showMessageDialog(_this, "Có lỗi xảy ra. Đăng ký thất bại!!!");
+				String username = usernameInput.getText();
+				String password = new String(passwordInput.getPassword());
+				String comfirm = new String(comfirmInput.getPassword());
+				String nickname = nicknameInput.getText();
+
+				if (username.isEmpty() || password.isEmpty() || comfirm.isEmpty() || nickname.isEmpty()) {
+					JOptionPane.showMessageDialog(_this, "Bạn phải nhập đủ thông tin.");
+				} else if (!password.equals(comfirm)) {
+					JOptionPane.showMessageDialog(_this, "Mật khẩu không khớp", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					Socket socket;
+					try {
+						socket = new Socket("localhost", 3333);
+						System.out.println("Dang xac thuc");
+						
+						DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+						DataInputStream dis = new DataInputStream(socket.getInputStream());
+						
+						dos.writeUTF("sign up request|>"+username +"-"+ password + "-" + nickname);
+						String response = dis.readUTF();
+						if (response.equals("success")) {
+							LoginView loginView = new LoginView();
+							dispose();
+						} else {
+							JOptionPane.showMessageDialog(_this, "Tài khoản hoặc tên đã tồn tại!\n Đăng ký thất bại!!!", "Error", JOptionPane.ERROR_MESSAGE);
+						}
+						dos.close();
+						dis.close();
+						socket.close();
+					} catch (UnknownHostException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 		});
-		btnSubmit.setBounds(187, 265, 159, 43);
+		btnSubmit.setBounds(103, 338, 152, 43);
 		contentPane.add(btnSubmit);
-		
+
 		JLabel lbSignIn = new JLabel("Sign Up");
 		lbSignIn.setForeground(new Color(0, 0, 255));
 		lbSignIn.setFont(new Font("#9Slide01 Tieu de ngan", Font.BOLD, 24));
 		lbSignIn.setHorizontalAlignment(SwingConstants.CENTER);
-		lbSignIn.setBounds(134, 23, 108, 58);
+		lbSignIn.setBounds(126, 22, 108, 58);
 		contentPane.add(lbSignIn);
-		
-		inputUsername = new JTextField();
-		inputUsername.setToolTipText("");
-		inputUsername.setBounds(177, 151, 169, 34);
-		contentPane.add(inputUsername);
-		inputUsername.setColumns(10);
-		
+
 		JLabel lblNewLabel = new JLabel("User name");
 		lblNewLabel.setBounds(25, 104, 67, 34);
 		contentPane.add(lblNewLabel);
-		
+
 		JLabel lblPassword = new JLabel("Password");
 		lblPassword.setBounds(25, 151, 67, 34);
 		contentPane.add(lblPassword);
-		
-		passwordField = new JPasswordField();
-		passwordField.setBounds(177, 197, 169, 34);
-		contentPane.add(passwordField);
-		
+
+		comfirmInput = new JPasswordField();
+		comfirmInput.setBounds(177, 197, 169, 34);
+		contentPane.add(comfirmInput);
+
 		JLabel lblCom = new JLabel("Comfirm password");
 		lblCom.setBounds(25, 197, 119, 34);
 		contentPane.add(lblCom);
-		
-		textField = new JTextField();
-		textField.setToolTipText("");
-		textField.setColumns(10);
-		textField.setBounds(177, 107, 169, 34);
-		contentPane.add(textField);
+
+		usernameInput = new JTextField();
+		usernameInput.setColumns(10);
+		usernameInput.setBounds(177, 107, 169, 34);
+		contentPane.add(usernameInput);
+
+		nicknameInput = new JTextField();
+		nicknameInput.setColumns(10);
+		nicknameInput.setBounds(93, 282, 175, 34);
+		contentPane.add(nicknameInput);
+
+		JLabel lblNickName = new JLabel("Nick name");
+		lblNickName.setBounds(145, 250, 67, 34);
+		contentPane.add(lblNickName);
+
+		passwordInput = new JPasswordField();
+		passwordInput.setBounds(177, 154, 169, 34);
+		contentPane.add(passwordInput);
 		this.setResizable(false);
 		this.setVisible(true);
 	}

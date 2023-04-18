@@ -28,7 +28,6 @@ public class DAO {
 
 			c = DriverManager.getConnection(url, user, password);
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
@@ -45,15 +44,16 @@ public class DAO {
 		}
 	}
 
-	public static void addData(String username, String password) {
+	public static void addData(String username, String password, String nickname) {
 		// tao ra doi tuong statement
 		try {
 			Connection connection = DAO.getConnection();
 
-			String sql = "INSERT INTO user (username, password) VALUES (?, ?)";
+			String sql = "INSERT INTO user (username, password, nickname) VALUES (?, ?, ?)";
 			PreparedStatement pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, username);
 			pstmt.setString(2, password);
+			pstmt.setString(3, nickname);
 
 			pstmt.executeUpdate();
 			System.out.println("Dang ky thanh cong");
@@ -66,28 +66,45 @@ public class DAO {
 		}
 	}
 
-	public static String getData(String username) {
+	public static boolean isDuplicateValue(String username, String nicknage) {
+		try {
+			Connection connection = DAO.getConnection();
+			String sql = "SELECT * FROM user WHERE username = ? OR nickname = ?";
+			PreparedStatement pstmt = connection.prepareStatement(sql);
+			pstmt.setString(1, username);
+			pstmt.setString(2, nicknage);
+			ResultSet rs = pstmt.executeQuery();
+			
+			if (rs.next()) {
+				return true;
+			}
+			rs.close();
+			pstmt.close();
+			DAO.closeConnection(connection);
+			return false;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public static String getData(String username, String password) {
 		// tao ra doi tuong statement
 		try {
 			Connection connection = DAO.getConnection();
 
 			String sql = "SELECT * FROM user WHERE username = ?";
 
-			// Chuẩn bị PreparedStatement để thực thi câu lệnh SQL
 			PreparedStatement pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, username);
 			ResultSet rs = pstmt.executeQuery();
 
 			if (rs.next()) {
-//				String retrievedUsername = rs.getString("username");
-			    String retrievedPassword = rs.getString("password");
-			    // So sánh username và
-//			    System.out.println(retrievedUsername);
-//			    System.out.println(retrievedPassword);
-			    return retrievedPassword;
-//			    if(password.equals(retrievedUsername)) {
-//			    	return true;
-//			    }
+				String retrievedPassword = rs.getString("password");
+				String retrievedNickname = rs.getString("nickname");
+				if (password.equals(retrievedPassword)) {
+					return retrievedNickname;
+				}
 			}
 			rs.close();
 			pstmt.close();
