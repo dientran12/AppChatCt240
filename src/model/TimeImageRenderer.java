@@ -1,6 +1,7 @@
 package model;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -26,8 +27,9 @@ public class TimeImageRenderer extends JPanel implements ListCellRenderer<TimeIm
         timeLabel.setBackground(null);
         imageLabel = new JLabel();
         nameClientLabel = new JLabel();
+        nameClientLabel.setForeground(Color.blue);
         messageLabel = new JLabel();
-        messageLabel.setFont(new Font("Times New Roman", Font.BOLD, 23));
+        messageLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
         messageLabel.setHorizontalAlignment(SwingConstants.LEADING);
 
         temp = new JPanel(new BorderLayout());

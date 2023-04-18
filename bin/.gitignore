@@ -1,2 +1,5 @@
 /app/
+/controller/
+/dao/
 /model/
+/server/

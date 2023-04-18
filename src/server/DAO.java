@@ -1,4 +1,4 @@
-package dao;
+package server;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,8 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import app.Server;
 
 public class DAO {
 	public DAO() {
@@ -47,19 +45,18 @@ public class DAO {
 		}
 	}
 
-	public static void addData(byte[] imageBytes) {
+	public static void addData(String username, String password) {
 		// tao ra doi tuong statement
 		try {
 			Connection connection = DAO.getConnection();
 
-			String sql = "INSERT INTO image (length, byteimage) VALUES (?)";
-
-			// Chuẩn bị PreparedStatement để thực thi câu lệnh SQL
+			String sql = "INSERT INTO user (username, password) VALUES (?, ?)";
 			PreparedStatement pstmt = connection.prepareStatement(sql);
-			pstmt.setBytes(2, imageBytes);
+			pstmt.setString(1, username);
+			pstmt.setString(2, password);
 
 			pstmt.executeUpdate();
-
+			System.out.println("Dang ky thanh cong");
 			pstmt.close();
 			DAO.closeConnection(connection);
 		} catch (SQLException e) {
@@ -69,29 +66,38 @@ public class DAO {
 		}
 	}
 
-	public static void getData(int imageId) {
+	public static String getData(String username) {
 		// tao ra doi tuong statement
 		try {
 			Connection connection = DAO.getConnection();
 
-			String sql = "SELECT * FROM image WHERE imageid = ?";
+			String sql = "SELECT * FROM user WHERE username = ?";
 
 			// Chuẩn bị PreparedStatement để thực thi câu lệnh SQL
 			PreparedStatement pstmt = connection.prepareStatement(sql);
-			pstmt.setInt(1, imageId);
+			pstmt.setString(1, username);
+			ResultSet rs = pstmt.executeQuery();
 
-			ResultSet result = pstmt.executeQuery();
-
-			if (result.next()) {
-				byteimage = result.getBytes("byteimage");
+			if (rs.next()) {
+//				String retrievedUsername = rs.getString("username");
+			    String retrievedPassword = rs.getString("password");
+			    // So sánh username và
+//			    System.out.println(retrievedUsername);
+//			    System.out.println(retrievedPassword);
+			    return retrievedPassword;
+//			    if(password.equals(retrievedUsername)) {
+//			    	return true;
+//			    }
 			}
-			result.close();
+			rs.close();
 			pstmt.close();
 			DAO.closeConnection(connection);
+			return "";
 		} catch (SQLException e) {
 			System.out.println("Lỗi khi truy xuất dữ liệu");
 			e.printStackTrace();
 			System.out.println("-----------");
+			return "";
 		}
 	}
 }
